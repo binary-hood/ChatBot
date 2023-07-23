@@ -1,44 +1,95 @@
+import openai
+import json
 from flask import Flask, render_template, request, jsonify
 
+# Replace 'YOUR_OPENAI_API_KEY' with your actual API key
+openai.api_key = "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"
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+# Define the 'function_descriptions' dictionary containing function descriptions
+function_descriptions = [
+    {
+        "name": "get_subject_name",
+        "description": "check the subject name of the question entered by the user",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "The topic of the question e.g. addition, subtraction, division, multiplication, degree",
+                },
+                "operator": {
+                    "type": "string",
+                    "description": "The operator used in question e.g. +, -, *, /, sin, degree, cos, tan, cot, cosec, sec, log",
+                },
+            },
+            "required": ["topic", "operator"],
+        },
+    }
+]
+
+def get_subject_name(topic, operator):
+    subject_info = {
+        "topic": topic,
+        "operator": operator,
+    }
+    return json.dumps(subject_info)
+
+def check_values_in_dict(dict1, dict2):
+    # Extract the values from dict1
+    topic_value = dict1["topic"]
+    operator_value = dict1["operator"]
+
+    # Check if the values are present in the values of either key in dict2
+    for valid_values in dict2.values():
+        if topic_value in valid_values or operator_value in valid_values:
+            return True
+        else: 
+            return False
 
 
-tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-medium")
-model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-medium")
+# Sample data with valid topics and operators
+data = {
+    "valid_topics": [
+        "addition", "subtraction", "division", "multiplication", "degree",
+        "square", "cube", "cuboid", "cone", "cylinder", "circle", "triangle",
+        "parallelogram", "rectangle", "trapezium", "rhomboid", "rhombus"
+    ],
+    "valid_operators": [
+        "+", "-", "*", "/", "sin", "degree", "cos", "tan", "cot", "cosec",
+        "sec", "log", "area", "volume", "perimeter", "circumference",
+        "radius", "diameter"
+    ]
+}
 
-
-app = Flask(__name__)
+# Flask app setup
+app = Flask(__name__, template_folder="templates")
 
 @app.route("/")
 def index():
-    return render_template('chat.html')
+    return render_template("index.html")
 
+@app.route("/get", methods=["POST"])
+def get_response():
+    user_message = request.form["msg"]
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-0613",
+        messages=[{"role": "user", "content": user_message}],
+        functions=function_descriptions,
+        function_call={"name": "get_subject_name"},
+    )
+    output = completion.choices[0].message
+    function_call_data = json.loads(output["function_call"]["arguments"])
+    result = check_values_in_dict(function_call_data, data)
 
-@app.route("/get", methods=["GET", "POST"])
-def chat():
-    msg = request.form["msg"]
-    input = msg
-    return get_Chat_response(input)
+    if result:
+        return "You are not authorized to ask this question."
+    else:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0613",
+            messages=[{"role": "user", "content": user_message}],
+        )
+        assistant_message = response.choices[0].message["content"]
+        return jsonify({"assistant_message": assistant_message})
 
-
-def get_Chat_response(text):
-
-    # Let's chat for 5 lines
-    for step in range(5):
-        # encode the new user input, add the eos_token and return a tensor in Pytorch
-        new_user_input_ids = tokenizer.encode(str(text) + tokenizer.eos_token, return_tensors='pt')
-
-        # append the new user input tokens to the chat history
-        bot_input_ids = torch.cat([chat_history_ids, new_user_input_ids], dim=-1) if step > 0 else new_user_input_ids
-
-        # generated a response while limiting the total chat history to 1000 tokens, 
-        chat_history_ids = model.generate(bot_input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
-
-        # pretty print last ouput tokens from bot
-        return tokenizer.decode(chat_history_ids[:, bot_input_ids.shape[-1]:][0], skip_special_tokens=True)
-
-
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run(debug=True)
