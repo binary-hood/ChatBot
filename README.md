@@ -4,9 +4,23 @@
 
 ## Installation & Setup
 
-[Install Python] https://www.dataquest.io/blog/installing-python-on-mac/
+[Install Python] https://www.python.org/downloads/
 
-[Install pip] https://phoenixnap.com/kb/install-pip-mac
+[Install pip]
+
+```
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+```
+
+```
+python3 get-pip.py
+```
+
+Ensure pip is installed by running the following command
+
+```
+pip --version
+```
 
 If you have Python & pip installed then check their version in the terminal or command line tools
 
@@ -26,7 +40,6 @@ In your terminal run the requirements.txt file using this pip
 pip install -r requirements.txt
 ```
 
-
 ## Running ChatBot Application in Terminal
 
 ```
@@ -34,10 +47,8 @@ cd into your directory
 ```
 
 ```
-python app.py
+python3 app.py
 ```
-
-
 
 ## What you will create
 
@@ -52,6 +63,7 @@ Throughout the tutorial, I will provide step-by-step instructions on how to set 
 By the end of this tutorial, you will have a fully functional chatbot that can engage in conversations with users, and you will have gained valuable experience in using Microsoft DialoGPT, Flask, and web development technologies such as HTML, CSS, and JavaScript.
 
 # ChatBot Link
+
 The Chatbot is constructed using the Microsoft/DialoGPT-medium model.
 
 ```
@@ -61,7 +73,7 @@ https://huggingface.co/microsoft/DialoGPT-medium
 # User-Html
 
 ```
-var userHtml = '<div class="d-flex justify-content-end mb-4"><div class="msg_cotainer_send">' + user_input + '<span class="msg_time_send">'+ time + 
+var userHtml = '<div class="d-flex justify-content-end mb-4"><div class="msg_cotainer_send">' + user_input + '<span class="msg_time_send">'+ time +
     '</span></div><div class="img_cont_msg"><img src="https://i.ibb.co/d5b84Xw/Untitled-design.png" class="rounded-circle user_img_msg"></div></div>';
 ```
 
